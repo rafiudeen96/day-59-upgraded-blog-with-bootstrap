@@ -1,8 +1,8 @@
+from flask import Flask,render_template,request
 import requests
-from flask import Flask,render_template
-import requests
+import smtplib
 
-app= Flask(__name__)
+app = Flask(__name__)
 
 all_posts = requests.get("https://api.npoint.io/674f5423f73deab1e9a7").json()
 
@@ -10,9 +10,29 @@ all_posts = requests.get("https://api.npoint.io/674f5423f73deab1e9a7").json()
 def home():
     return render_template("index.html",all_posts=all_posts)
 
-@app.route("/contact")
+@app.route("/contact", methods=["GET","POST"])
 def contact():
-    return render_template("contact.html")
+    if request.method == "POST":
+        name = request.form["name"]
+        email = request.form['email']
+        phone = request.form['phone']
+        message = request.form['message']
+
+        # ---------------------------------- SMTP SECTION ------------------------------------------- #
+        owners_email = "rafiudeen96@gmail.com"
+        owners_password = "lnklflelzzwpajas"
+        with smtplib.SMTP("smtp.gmail.com") as connection:
+            connection.starttls()
+            connection.login(user=owners_email,password=owners_password)
+            connection.sendmail(from_addr=owners_email,to_addrs=owners_email,
+                                msg=f"Subject:{name}\n\nThis message is from: {email}\n{message}\n\n Contact Info:{phone}")
+
+        # --------------------------------- SMTP SECTION ----------------------------------------------#
+
+        return render_template("contact.html",name=name,message_sent=True)
+
+    else:
+        return render_template("contact.html")
 
 @app.route("/about")
 def about():
